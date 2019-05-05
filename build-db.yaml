@@ -1,0 +1,46 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: build-db
+  namespace: default
+spec:
+  completions: 1
+  template:
+    metadata:
+      name: build-db
+    spec:
+      ttlSecondsAfterFinished: 60
+      restartPolicy: Never
+      initContainers:
+        - name: git-pull-init
+          image: alpine/git:latest
+          args: ["clone","https://github.com/cdan/yelb.git","/workspace"]
+          volumeMounts:
+            - name: workspace-vol
+              mountPath: /workspace
+      containers:
+      - name: kaniko
+        image: gcr.io/kaniko-project/executor:latest
+        args: ["--dockerfile=/workspace/yelb-db/Dockerfile",
+               "--context=/workspace/yelb-db",
+               "--destination=cdan/yelb-db:$${BUILD_SEQ}"]
+        resources:
+          requests:
+            memory: "1024Mi"
+            cpu: "800m"
+        volumeMounts:
+          - name: workspace-vol
+            mountPath: /workspace
+          - name:  registry-creds
+            mountPath: /kaniko/.docker
+      volumes:
+      - name: registry-creds
+        projected:
+          sources:
+          - secret:
+              name: docker-secret
+              items:
+              - key: .dockerconfigjson
+                path: config.json
+      - name: workspace-vol
+        emptyDir: {}
