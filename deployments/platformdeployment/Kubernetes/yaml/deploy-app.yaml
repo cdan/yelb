@@ -112,7 +112,7 @@ spec:
     spec:
       containers:
       - name: yelb-db
-        image:  mreferre/yelb-db:$${BUILD_SEQ}
+        image:  cdan/yelb-db:$${BUILD_SEQ}
         ports:
         - containerPort: 5432
 ---
