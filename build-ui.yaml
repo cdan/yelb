@@ -21,8 +21,8 @@ spec:
       containers:
       - name: kaniko
         image: gcr.io/kaniko-project/executor:latest
-        args: ["--dockerfile=/workspace/Dockerfile",
-               "--context=/workspace",
+        args: ["--dockerfile=/workspace/yelb-ui/Dockerfile",
+               "--context=/workspace/yelb-ui",
                "--destination=cdan/yelb-ui:$${BUILD_SEQ}"]
         resources:
           requests:
