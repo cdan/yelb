@@ -32,7 +32,7 @@ spec:
           - name: workspace-vol
             mountPath: /workspace
           - name:  registry-creds
-            mountPath: /root/
+            mountPath: /kaniko/
       volumes:
       - name: registry-creds
         projected:
