@@ -107,7 +107,8 @@ get '/api/getstats' do
     redis.incr("pageviews")
     @hostname = Socket.gethostname
     @pageviews = redis.get("pageviews")
-    @stats = '{"hostname": "' + @hostname + '"' + ", " + '"pageviews":' + @pageviews + "}"
+    @ip = IPSocket.getaddress(@hostname)
+    @stats = '{"hostname": "' + @hostname + '"' + ", " + '"pageviews":' + @pageviews + ", " + '"ip":"' + @ip  + '"' + "}"
 end #get /api/getstats
 
 

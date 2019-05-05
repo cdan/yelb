@@ -52,7 +52,7 @@ metadata:
     app: yelb-ui
     tier: frontend
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   ports:
   - port: 80
     protocol: TCP
@@ -75,7 +75,8 @@ spec:
     spec:
       containers:
       - name: yelb-ui
-        image:  mreferre/yelb-ui:0.3
+        image:  cdan/yelb-ui:v10
+        #imagePullPolicy: Always
         ports:
         - containerPort: 80
 ---
@@ -128,8 +129,9 @@ spec:
         tier: middletier
     spec:
       containers:
+      #imagePullPolicy: Always
       - name: yelb-appserver
-        image:  mreferre/yelb-appserver:0.3
+        image:  cdan/yelb-appserver:v4
         ports:
         - containerPort: 4567
 

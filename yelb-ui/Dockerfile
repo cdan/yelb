@@ -9,7 +9,7 @@ ADD clarity-seed-newfiles clarity-seed-newfiles
 
 RUN git clone https://github.com/vmware/clarity-seed.git
 WORKDIR /clarity-seed
-RUN git checkout -b f3250ee26ceb847f61bb167a90dc957edf6e7f43
+#RUN git checkout -b f3250ee26ceb847f61bb167a90dc957edf6e7f43
 
 RUN cp /clarity-seed-newfiles/src/index.html /clarity-seed/src/index.html
 RUN cp /clarity-seed-newfiles/src/styles.css /clarity-seed/src/styles.css
@@ -25,8 +25,8 @@ WORKDIR /clarity-seed/src
 RUN npm install  
 
 RUN ng build --environment=prod --output-path=./prod/dist/
-RUN ng build --environment=test --output-path=./test/dist/
-RUN ng build --environment=dev --output-path=./dev/dist/
+#RUN ng build --environment=test --output-path=./test/dist/
+#RUN ng build --environment=dev --output-path=./dev/dist/
 
 
 FROM nginx:1.11.5
@@ -40,8 +40,8 @@ ENV UI_ENV=prod
 RUN chmod +x startup.sh
 
 COPY --from=0 /clarity-seed/src/prod/dist /clarity-seed/prod/dist
-COPY --from=0 /clarity-seed/src/test/dist /clarity-seed/test/dist
-COPY --from=0 /clarity-seed/src/dev/dist /clarity-seed/dev/dist
+#COPY --from=0 /clarity-seed/src/test/dist /clarity-seed/test/dist
+#COPY --from=0 /clarity-seed/src/dev/dist /clarity-seed/dev/dist
 
 CMD ["./startup.sh"]
 
