@@ -1,0 +1,46 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: build-ui
+  namespace: default
+spec:
+  completions: 1
+  template:
+    metadata:
+      name: build-ui
+    spec:
+      ttlSecondsAfterFinished: 60
+      restartPolicy: Never
+      initContainers:
+        - name: git-pull-init
+          image: alpine/git:latest
+          args: ["clone","https://github.com/cdan/yelb.git","/workspace"]
+          volumeMounts:
+            - name: workspace-vol
+              mountPath: /workspace
+      containers:
+      - name: kaniko
+        image: gcr.io/kaniko-project/executor:latest
+        args: ["--dockerfile=/workspace/Dockerfile",
+               "--context=/workspace",
+               "--destination=cdan/yelb-ui:$${BUILD_SEQ}"]
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+        volumeMounts:
+          - name: workspace-vol
+            mountPath: /workspace
+          - name:  registry-creds
+            mountPath: /root/
+      volumes:
+      - name: registry-creds
+        projected:
+          sources:
+          - secret:
+              name: docker-secret
+              items:
+              - key: .dockerconfigjson
+                path: .docker/config.json
+      - name: workspace-vol
+        emptyDir: {}

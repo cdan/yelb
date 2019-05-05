@@ -1,0 +1,13 @@
+apiVersion: contour.heptio.com/v1beta1
+kind: IngressRoute
+metadata:
+  name: yelb-ir
+spec:
+  virtualhost:
+    fqdn: contour.cdan-test-c23cfd64-12dd-11e9-958c-0a8a1b3b0536.93a9beeb-d761-4551-bdba-e1f8b99fb995.vke-user.com
+  routes:
+    - match: /
+      #prefixRewrite: "/yelb"
+      services:
+        - name: yelb-ui
+          port: 80
