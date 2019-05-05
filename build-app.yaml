@@ -1,13 +1,13 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: build-ui
+  name: build-appserver
   namespace: default
 spec:
   completions: 1
   template:
     metadata:
-      name: build-ui
+      name: build-appserver
     spec:
       ttlSecondsAfterFinished: 60
       restartPolicy: Never
