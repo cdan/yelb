@@ -21,9 +21,9 @@ spec:
       containers:
       - name: kaniko
         image: gcr.io/kaniko-project/executor:latest
-        args: ["--dockerfile=/workspace/yelb-ui/Dockerfile",
-               "--context=/workspace/yelb-ui",
-               "--destination=cdan/yelb-ui:$${BUILD_SEQ}"]
+        args: ["--dockerfile=/workspace/yelb-appserver/Dockerfile",
+               "--context=/workspace/yelb-appserver",
+               "--destination=cdan/yelb-appserver:$${BUILD_SEQ}"]
         resources:
           requests:
             memory: "1024Mi"
