@@ -1,14 +1,14 @@
 FROM cdan/node:v1
 MAINTAINER cdan
 
-WORKDIR /
+#WORKDIR /
 
 #RUN npm install -g @angular/cli
 
-ADD clarity-seed-newfiles clarity-seed-newfiles 
+ADD clarity-seed-newfiles /clarity-seed-newfiles 
 
 #RUN git clone https://github.com/vmware/clarity-seed.git
-WORKDIR /clarity-seed
+#WORKDIR /clarity-seed
 #RUN git checkout -b f3250ee26ceb847f61bb167a90dc957edf6e7f43
 
 RUN cp -r /clarity-seed-newfiles/* /clarity-seed/
