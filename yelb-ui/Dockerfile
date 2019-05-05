@@ -1,13 +1,13 @@
-FROM node:8.11
-MAINTAINER massimo@it20.info
+FROM cdan/node:v1
+MAINTAINER cdan
 
 WORKDIR /
 
-RUN npm install -g @angular/cli
+#RUN npm install -g @angular/cli
 
 ADD clarity-seed-newfiles clarity-seed-newfiles 
 
-RUN git clone https://github.com/vmware/clarity-seed.git
+#RUN git clone https://github.com/vmware/clarity-seed.git
 WORKDIR /clarity-seed
 #RUN git checkout -b f3250ee26ceb847f61bb167a90dc957edf6e7f43
 
@@ -17,12 +17,12 @@ RUN cp /clarity-seed-newfiles/src/app/app* /clarity-seed/src/app
 RUN cp /clarity-seed-newfiles/src/environments/env* /clarity-seed/src/environments
 RUN cp /clarity-seed-newfiles/package.json /clarity-seed/package.json
 RUN cp /clarity-seed-newfiles/angular-cli.json /clarity-seed/.angular-cli.json
-RUN rm -r /clarity-seed/src/app/home
-RUN rm -r /clarity-seed/src/app/about
+#RUN rm -r /clarity-seed/src/app/home
+#RUN rm -r /clarity-seed/src/app/about
 
 WORKDIR /clarity-seed/src
 
-RUN npm install  
+#RUN npm install  
 
 RUN ng build --environment=prod --output-path=./prod/dist/
 #RUN ng build --environment=test --output-path=./test/dist/
