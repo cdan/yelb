@@ -21,9 +21,9 @@ disable :protection
 # the system variable RACK_ENV controls which environment you are enabling
 # if you choose 'custom' with RACK_ENV, all systems variables in the section need to be set before launching the yelb-appserver application
 configure :production do
-  set :redishost, "redis-server"
+  set :redishost, ENV['REDIS_SERVER_ENDPOINT'] || "redis-server"
   set :port, 4567
-  set :yelbdbhost => "yelb-db"
+  set :yelbdbhost => ENV['YELB_DB_SERVER_ENDPOINT'] || "yelb-db"
   set :yelbdbport => 5432
 end
 configure :test do
