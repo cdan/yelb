@@ -1,8 +1,14 @@
 # This should work on Kubernetes deployments that have LoadBalancer support
 apiVersion: v1
+kind: Namespace
+metadata:
+  name: yelb
+---
+apiVersion: v1
 kind: Service
 metadata:
   name: redis-server
+  namespace: yelb
   labels:
     app: redis-server
     tier: cache
@@ -18,6 +24,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: yelb-db
+  namespace: yelb
   labels:
     app: yelb-db
     tier: backenddb
@@ -33,6 +40,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: yelb-appserver
+  namespace: yelb
   labels:
     app: yelb-appserver
     tier: middletier
@@ -48,6 +56,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: yelb-ui
+  namespace: yelb
   labels:
     app: yelb-ui
     tier: frontend
@@ -65,6 +74,7 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: yelb-ui
+  namespace: yelb
 spec:
   replicas: 1
   template:
@@ -84,6 +94,7 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: redis-server
+  namespace: yelb
 spec:
   replicas: 1
   template:
@@ -102,6 +113,7 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: yelb-db
+  namespace: yelb
 spec:
   replicas: 1
   template:
@@ -120,6 +132,7 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: yelb-appserver
+  namespace: yelb
 spec:
   replicas: 1
   template:
