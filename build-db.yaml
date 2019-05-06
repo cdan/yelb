@@ -26,7 +26,7 @@ spec:
                "--destination=cdan/yelb-db:$${BUILD_SEQ}"]
         resources:
           requests:
-            memory: "1024Mi"
+            memory: "768Mi"
             cpu: "800m"
         volumeMounts:
           - name: workspace-vol
