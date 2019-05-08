@@ -1,13 +1,55 @@
 apiVersion: contour.heptio.com/v1beta1
 kind: IngressRoute
-metadata:
-  name: yelb-ir
-spec:
+metadata: 
+  name: yelb-entry
+  namespace: default 
+spec: 
   virtualhost:
-    fqdn: contour.cdan-test-c23cfd64-12dd-11e9-958c-0a8a1b3b0536.93a9beeb-d761-4551-bdba-e1f8b99fb995.vke-user.com
+    fqdn: yelb.corp.local
+ #tls:
+ #secretName: containersteve-com
+  routes: 
+  - match: /
+    delegate:
+      name: blue #將服務委任給後端Blue IngressRoute
+      namespace: blue
+---
+apiVersion: contour.heptio.com/v1beta1
+kind: IngressRoute
+metadata:
+  name: grey
+  namespace: default
+spec:
   routes:
-    - match: /
-      #prefixRewrite: "/yelb"
-      services:
-        - name: yelb-ui
-          port: 80
+  - match: /
+    delegate:
+    - name: blue
+      namespace: blue
+      weight: 50
+    - name: green
+      namespace: green
+      weight: 50
+---
+apiVersion: contour.heptio.com/v1beta1
+kind: IngressRoute
+metadata: 
+  name: blue
+  namespace: blue
+spec: 
+  routes: 
+  - match: /
+    services: 
+    - name: yelb-ui
+      port: 80
+---
+apiVersion: contour.heptio.com/v1beta1
+kind: IngressRoute
+metadata:
+  name: green
+  namespace: green
+spec:
+  routes:
+  - match: /
+    services:
+    - name: yelb-ui
+      port: 80
