@@ -1,9 +1,4 @@
-# This should work on Kubernetes deployments that have LoadBalancer support
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: green
----
+
 apiVersion: v1
 kind: Service
 metadata:
