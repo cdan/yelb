@@ -119,7 +119,7 @@ spec:
     spec:
       containers:
       - name: yelb-db
-        image:  harbor.corp.local/cdan/yelb-db:$${BUILD_SEQ}
+        image:  harbor.corp.local/cdan/yelb-db:20
         ports:
         - containerPort: 5432
 ---
@@ -139,7 +139,7 @@ spec:
       containers:
       #imagePullPolicy: Always
       - name: yelb-appserver
-        image:  harbor.corp.local/cdan/yelb-appserver:$${BUILD_SEQ}
+        image:  harbor.corp.local/cdan/yelb-appserver:20
         ports:
         - containerPort: 4567
 
