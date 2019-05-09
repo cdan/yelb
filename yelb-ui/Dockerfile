@@ -16,7 +16,7 @@ RUN cp -r /clarity-seed-newfiles/* /clarity-seed/
 #RUN cp /clarity-seed-newfiles/src/app/app* /clarity-seed/src/app
 #RUN cp /clarity-seed-newfiles/src/environments/env* /clarity-seed/src/environments
 #RUN cp /clarity-seed-newfiles/package.json /clarity-seed/package.json
-#RUN cp /clarity-seed-newfiles/angular-cli.json /clarity-seed/.angular-cli.json
+RUN cp /clarity-seed-newfiles/angular-cli.json /clarity-seed/.angular-cli.json
 #RUN rm -r /clarity-seed/src/app/home
 #RUN rm -r /clarity-seed/src/app/about
 
