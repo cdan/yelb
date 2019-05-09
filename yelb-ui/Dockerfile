@@ -1,4 +1,4 @@
-FROM cdan/node:v1
+FROM cdan/node:v2
 MAINTAINER cdan
 
 #WORKDIR /
