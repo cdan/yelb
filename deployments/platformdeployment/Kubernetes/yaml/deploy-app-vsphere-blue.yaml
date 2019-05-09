@@ -80,7 +80,7 @@ spec:
     spec:
       containers:
       - name: yelb-ui
-        image:  harbor.corp.local/cdan/yelb-ui:25
+        image:  harbor.corp.local/cdan/yelb-ui:$${BUILD_SEQ}
         #imagePullPolicy: Always
         ports:
         - containerPort: 80
