@@ -69,9 +69,10 @@ spec:
       #imagePullPolicy: Always
       - name: yelb-appserver
         image:  harbor.corp.local/cdan/yelb-appserver:20
+        env:
         - name: REDIS_SERVER_ENDPOINT
           value: $${REDIS_SERVER}
-          name: YELB_DB_SERVER_ENDPOINT
+        - name: YELB_DB_SERVER_ENDPOINT
           value: $${POSTGRES_SERVER}
         ports:
         - containerPort: 4567
