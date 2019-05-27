@@ -26,8 +26,8 @@ spec:
                "--destination=cdan/yelb-appserver:$${BUILD_SEQ}"]
         resources:
           requests:
-            memory: "768Mi"
-            cpu: "800m"
+            memory: "512Mi"
+            cpu: "400m"
         volumeMounts:
           - name: workspace-vol
             mountPath: /workspace
