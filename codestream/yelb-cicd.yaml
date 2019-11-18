@@ -1,0 +1,438 @@
+---
+project: cdan-project
+kind: PIPELINE
+name: yelb-cicd
+enabled: true
+concurrency: 10
+ciWorkspace:
+  endpoint: cdan-dockerhost
+  image: gorchard/packer:latest
+  registry: ''
+  path: ''
+  cache:
+  - ''
+stageOrder:
+- Build using Cloud PKS in AWS
+- DeployApp_Test_AWS
+- DeployApp_Staging_vSphere
+- DeployApp_Production_vSphere
+stages:
+  DeployApp_Staging_vSphere:
+    taskOrder:
+    - Get_the_current_Staging_ENV
+    - Deploy data service VM blueprint
+    - Clean_Staging_blue,Clean_Staging_green
+    - Deploy_to_Staging_blue,Deploy_to_Staging-green
+    - Promote_to_Production,Promote_to_Production-1
+    - Switch_blue_green,Switch_blue_green-1
+    tasks:
+      Deploy_to_Staging_blue:
+        type: K8S
+        preCondition: ${DeployApp_Staging_vSphere.Get_the_current_Staging_ENV.output.logs[0]} == "green"
+        endpoints:
+          scm: cdan-yelb
+          kubernetesServer: cdan-vbc-pks-mycluster1
+        input:
+          filePath: deployments/platformdeployment/Kubernetes/yaml/deploy-app-vsphere-blue.yaml
+          commit: ''
+          namespace: ''
+          scmConstants: {
+            BUILD_SEQ: '${executionIndex}',
+            REDIS_SERVER: '${DeployApp_Staging_vSphere.Deploy data service VM blueprint.output.deploymentDetails.resources.Redis402.address}',
+            POSTGRES_SERVER: '${DeployApp_Staging_vSphere.Deploy data service VM blueprint.output.deploymentDetails.resources.PostgreSQL.address}'
+          }
+          action: CREATE
+          filterByLabel: ''
+          continueOnConflict: false
+          timeout: '10'
+          yaml: ''
+          revision: n-1
+      Promote_to_Production:
+        type: UserOperation
+        preCondition: ${DeployApp_Staging_vSphere.Get_the_current_Staging_ENV.output.logs[0]} == "green"
+        input:
+          summary: Is staging ENV ready for production?
+          pipelineName: ${name}
+          expirationInDays: 3
+          approverGroups: [
+            ]
+          approvers: [
+            dancheng@vmware.com]
+          description: "Please try staging ENV\n${DeployApp_Staging_vSphere.Deploy_to_Staging_blue.output.response.loadBalancers.yelb-ui.ingress[0].ip} "
+          sendemail: false
+      Deploy_to_Staging-green:
+        type: K8S
+        preCondition: ${DeployApp_Staging_vSphere.Get_the_current_Staging_ENV.output.logs[0]} == "blue"
+        endpoints:
+          scm: cdan-yelb
+          kubernetesServer: cdan-vbc-pks-mycluster1
+        input:
+          filePath: deployments/platformdeployment/Kubernetes/yaml/deploy-app-vsphere-green.yaml
+          commit: ''
+          namespace: ''
+          scmConstants: {
+            BUILD_SEQ: '${executionIndex}',
+            REDIS_SERVER: '${DeployApp_Staging_vSphere.Deploy data service VM blueprint.output.deploymentDetails.resources.Redis402.address}',
+            POSTGRES_SERVER: '${DeployApp_Staging_vSphere.Deploy data service VM blueprint.output.deploymentDetails.resources.PostgreSQL.address}'
+          }
+          action: CREATE
+          filterByLabel: ''
+          continueOnConflict: false
+          timeout: '10'
+          yaml: ''
+          revision: n-1
+      Switch_blue_green:
+        type: SSH
+        preCondition: ${DeployApp_Staging_vSphere.Get_the_current_Staging_ENV.output.logs[0]} == "green"
+        endpoints:
+          agent: cdan-vbc-agent
+        input:
+          privatekey: ''
+          password: s2enc~QLJhR9ZEpy6UAgaHLj+mGA==
+          workingDirectory: ''
+          environmentVariables: {
+            }
+          host: 10.40.14.6
+          arguments: [
+            ]
+          passphrase: ''
+          script: |
+            kubectl patch ingressroute yelb-entry --type='json' -p='[{"op": "replace", "path": "/spec/routes/0/delegate/namespace", "value":"blue"}]'
+          username: ubuntu
+      Switch_blue_green-1:
+        type: SSH
+        preCondition: ${DeployApp_Staging_vSphere.Get_the_current_Staging_ENV.output.logs[0]} == "blue"
+        endpoints:
+          agent: cdan-vbc-agent
+        input:
+          privatekey: ''
+          password: s2enc~QLJhR9ZEpy6UAgaHLj+mGA==
+          workingDirectory: ''
+          environmentVariables: {
+            }
+          host: 10.40.14.6
+          arguments: [
+            ]
+          passphrase: ''
+          script: |
+            kubectl patch ingressroute yelb-entry --type='json' -p='[{"op": "replace", "path": "/spec/routes/0/delegate/namespace", "value":"green"}]'
+          username: ubuntu
+      Deploy data service VM blueprint:
+        type: Blueprint
+        input:
+          blueprint: Redis402 PostgreSQL10 Untunbu on vSphere
+          action: CreateDeployment
+          deploymentName: ''
+          version: '1.0'
+          parameters: {
+            }
+      Clean_Staging_blue:
+        type: SSH
+        ignoreFailure: true
+        preCondition: ${DeployApp_Staging_vSphere.Get_the_current_Staging_ENV.output.logs[0]} == "green"
+        endpoints:
+          agent: cdan-vbc-agent
+        input:
+          privatekey: ''
+          password: s2enc~QLJhR9ZEpy6UAgaHLj+mGA==
+          workingDirectory: ''
+          environmentVariables: {
+            }
+          host: 10.40.14.6
+          arguments: [
+            ]
+          passphrase: ''
+          script: |
+            kubectl delete namespace blue
+            kubectl create namespace blue
+            kubectl create -f /home/ubuntu/blue-green/ir-blue.yaml
+          username: ubuntu
+      Clean_Staging_green:
+        type: SSH
+        ignoreFailure: true
+        preCondition: ${DeployApp_Staging_vSphere.Get_the_current_Staging_ENV.output.logs[0]} == "blue"
+        endpoints:
+          agent: cdan-vbc-agent
+        input:
+          privatekey: ''
+          password: s2enc~QLJhR9ZEpy6UAgaHLj+mGA==
+          workingDirectory: ''
+          environmentVariables: {
+            }
+          host: 10.40.14.6
+          arguments: [
+            ]
+          passphrase: ''
+          script: |-
+            kubectl delete namespace green
+            kubectl create namespace green
+            kubectl create -f /home/ubuntu/blue-green/ir-green.yaml
+          username: ubuntu
+      Get_the_current_Staging_ENV:
+        type: SSH
+        endpoints:
+          agent: cdan-vbc-agent
+        input:
+          privatekey: ''
+          password: s2enc~QLJhR9ZEpy6UAgaHLj+mGA==
+          workingDirectory: ''
+          environmentVariables: {
+            }
+          host: 10.40.14.6
+          arguments: [
+            ]
+          passphrase: ''
+          script: kubectl get ingressroute yelb-entry --output=jsonpath={.spec.routes[0].delegate.namespace}
+          username: ubuntu
+      Promote_to_Production-1:
+        type: UserOperation
+        preCondition: ${DeployApp_Staging_vSphere.Get_the_current_Staging_ENV.output.logs[0]} == "blue"
+        input:
+          summary: Is staging ENV ready for production?
+          pipelineName: ${name}
+          expirationInDays: 3
+          approverGroups: [
+            ]
+          approvers: [
+            dancheng@vmware.com]
+          description: |-
+            Please try staging ENV
+            ${DeployApp_Staging_vSphere.Deploy_to_Staging-green.output.response.loadBalancers.yelb-ui.ingress[0].ip}
+          sendemail: false
+  DeployApp_Test_AWS:
+    taskOrder:
+    - deploy-app
+    - UAT Gate
+    - clean-test-deployment
+    tasks:
+      deploy-app:
+        type: K8S
+        endpoints:
+          scm: cdan-yelb
+          kubernetesServer: cdan-cpks-endpoint
+        input:
+          filePath: deployments/platformdeployment/Kubernetes/yaml/deploy-app.yaml
+          commit: ''
+          namespace: ''
+          scmConstants: {
+            BUILD_SEQ: '${executionIndex}'
+          }
+          action: CREATE
+          filterByLabel: ''
+          continueOnConflict: false
+          timeout: '8'
+          yaml: ''
+          revision: n-1
+      UAT Gate:
+        type: UserOperation
+        input:
+          summary: User Acceptance Test
+          pipelineName: ${name}
+          expirationInDays: 3
+          approverGroups: [
+            ]
+          approvers: [
+            dancheng@vmware.com]
+          description: 'Please verify and approve the release of this deployment. URL: ${DeployApp_Test_AWS.deploy-app.output.response.loadBalancers.yelb-ui.ingress[0].hostname}'
+          sendemail: false
+      clean-test-deployment:
+        type: K8S
+        endpoints:
+          kubernetesServer: cdan-cpks-endpoint
+        input:
+          filePath: ''
+          commit: ''
+          namespace: ''
+          scmConstants: {
+            BUILD_SEQ: '${executionIndex}'
+          }
+          action: DELETE
+          filterByLabel: ''
+          continueOnConflict: false
+          timeout: '5'
+          yaml: |-
+            apiVersion: v1
+            kind: Namespace
+            metadata:
+              name: yelb
+          revision: n-1
+  Build using Cloud PKS in AWS:
+    taskOrder:
+    - build-ui,build-appserver,build-db
+    - Check latest images
+    - clean-build-ui,clean-build-appserver,clean-build-db
+    tasks:
+      build-appserver:
+        type: K8S
+        endpoints:
+          scm: cdan-yelb
+          kubernetesServer: cdan-cpks-endpoint
+        input:
+          filePath: build-app.yaml
+          commit: ''
+          namespace: ''
+          scmConstants: {
+            BUILD_SEQ: '${executionIndex}'
+          }
+          action: CREATE
+          filterByLabel: ''
+          continueOnConflict: false
+          timeout: '5'
+          yaml: ''
+          revision: n-1
+      build-db:
+        type: K8S
+        endpoints:
+          scm: cdan-yelb
+          kubernetesServer: cdan-cpks-endpoint
+        input:
+          filePath: build-db.yaml
+          commit: ''
+          namespace: ''
+          scmConstants: {
+            BUILD_SEQ: '${executionIndex}'
+          }
+          action: CREATE
+          filterByLabel: ''
+          continueOnConflict: false
+          timeout: '5'
+          yaml: ''
+          revision: n-1
+      clean-build-appserver:
+        type: K8S
+        endpoints:
+          scm: cdan-yelb
+          kubernetesServer: cdan-cpks-endpoint
+        input:
+          filePath: build-app.yaml
+          commit: ''
+          namespace: ''
+          scmConstants: {
+            }
+          action: DELETE
+          filterByLabel: ''
+          continueOnConflict: false
+          timeout: '5'
+          yaml: ''
+          revision: n-1
+      clean-build-db:
+        type: K8S
+        endpoints:
+          scm: cdan-yelb
+          kubernetesServer: cdan-cpks-endpoint
+        input:
+          filePath: build-db.yaml
+          commit: ''
+          namespace: ''
+          scmConstants: {
+            }
+          action: DELETE
+          filterByLabel: ''
+          continueOnConflict: false
+          timeout: '5'
+          yaml: ''
+          revision: n-1
+      Check latest images:
+        type: SSH
+        input:
+          privatekey: s2enc~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
+          password: ''
+          environmentVariables: {
+            BUILD_SEQ: '${executionIndex}'
+          }
+          host: 54.183.227.223
+          arguments: [
+            ]
+          passphrase: ''
+          script: |-
+            while ! curl --silent -f -lSL https://index.docker.io/v1/repositories/cdan/yelb-ui/tags/$BUILD_SEQ > /dev/null; do
+                echo 'sleep'
+                echo $BUILD_SEQ
+                sleep 10
+            done
+          username: ubuntu
+      build-ui:
+        type: K8S
+        endpoints:
+          scm: cdan-yelb
+          kubernetesServer: cdan-cpks-endpoint
+        input:
+          filePath: build-ui.yaml
+          commit: ''
+          namespace: ''
+          scmConstants: {
+            BUILD_SEQ: '${executionIndex}'
+          }
+          action: CREATE
+          filterByLabel: ''
+          continueOnConflict: false
+          timeout: '5'
+          yaml: ''
+          revision: n-1
+      clean-build-ui:
+        type: K8S
+        endpoints:
+          scm: cdan-yelb
+          kubernetesServer: cdan-cpks-endpoint
+        input:
+          filePath: build-ui.yaml
+          commit: ''
+          namespace: ''
+          scmConstants: {
+            }
+          action: DELETE
+          filterByLabel: ''
+          continueOnConflict: false
+          timeout: '5'
+          yaml: ''
+          revision: n-1
+  DeployApp_Production_vSphere:
+    taskOrder:
+    - Rollback
+    - Switch_blue_green,Switch_blue_green-1
+    tasks:
+      Switch_blue_green:
+        type: SSH
+        preCondition: ${DeployApp_Staging_vSphere.Get_the_current_Staging_ENV.output.logs[0]} == "green"
+        endpoints:
+          agent: cdan-vbc-agent
+        input:
+          privatekey: ''
+          password: s2enc~QLJhR9ZEpy6UAgaHLj+mGA==
+          workingDirectory: ''
+          environmentVariables: {
+            }
+          host: 10.40.14.6
+          arguments: [
+            ]
+          passphrase: ''
+          script: 'kubectl patch ingressroute yelb-entry --type=''json'' -p=''[{"op": "replace", "path":
+            "/spec/routes/0/delegate/namespace", "value":"green"}]'''
+          username: ubuntu
+      Switch_blue_green-1:
+        type: SSH
+        preCondition: ${DeployApp_Staging_vSphere.Get_the_current_Staging_ENV.output.logs[0]} == "blue"
+        endpoints:
+          agent: cdan-vbc-agent
+        input:
+          privatekey: ''
+          password: s2enc~QLJhR9ZEpy6UAgaHLj+mGA==
+          workingDirectory: ''
+          environmentVariables: {
+            }
+          host: 10.40.14.6
+          arguments: [
+            ]
+          passphrase: ''
+          script: 'kubectl patch ingressroute yelb-entry --type=''json'' -p=''[{"op": "replace", "path":
+            "/spec/routes/0/delegate/namespace", "value":"blue"}]'''
+          username: ubuntu
+      Rollback:
+        type: UserOperation
+        input:
+          summary: Rollback?
+          pipelineName: ${name}
+          expirationInDays: 3
+          approvers: [
+            dancheng@vmware.com]
+          sendemail: false
